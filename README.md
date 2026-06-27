@@ -32,7 +32,7 @@ But if you wanna use Mamba, you can it up using:
 conda install -n base -c conda-forge mamba
 ```
 
-### 2. Environment Setup
+### 3. Environment Setup
 You can set up the required environments using either `conda` or `mamba`.
 
 #### Option A: Using Conda
@@ -67,7 +67,7 @@ mamba create -n mitocatch_trinity -c conda-forge -c bioconda trinity=2.1.1 samto
 mamba create -n mitocatch_annotation -c conda-forge -c bioconda blast=2.17.0 biopython=1.85 entrez-direct=24.0 -y
 ```
 
-### 3. Initialize GetOrganelle Database
+### 4. Initialize GetOrganelle Database
 Required only upon first installation.
 
 ```bash
