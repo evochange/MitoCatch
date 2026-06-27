@@ -1,0 +1,39 @@
+Project:
+-----------------------
+Project name          = Trechus_NOVO
+Type                  = Assembler
+Genome Range          = 15000-18500
+K-mer                 = 39
+Max memory            = 0
+Extended log          = 0
+Save assembled reads  = no
+Seed Input            = /users1/cpca070092024/dleitao/estagio/MitoCatch/data/raw/seed.fasta
+Extend seed directly  = no
+Reference sequence    = 
+Variance detection    = 
+Chloroplast sequence  = 
+
+Dataset 1:
+-----------------------
+Read Length           = 150
+Insert size           = 300
+Platform              = illumina
+Single/Paired         = PE
+Combined reads        = 
+Forward reads         = /users1/cpca070092024/dleitao/estagio/MitoCatch/data/raw/trechus_12-L4_R1.fq.gz
+Reverse reads         = /users1/cpca070092024/dleitao/estagio/MitoCatch/data/raw/trechus_12-L4_R2.fq.gz
+Store Hash            = 
+
+Heteroplasmy:
+-----------------------
+MAF                   = 
+HP exclude list       = 
+PCR-free              = 
+
+Optional:
+-----------------------
+Insert size auto      = yes
+Use Quality Scores    = no
+Reduce ambigious N's  = no
+Output path           = 
+EOF

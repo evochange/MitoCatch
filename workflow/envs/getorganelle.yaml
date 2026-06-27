@@ -1,0 +1,7 @@
+name: mitocatch_getorganelle
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - getorganelle=1.7.7.0

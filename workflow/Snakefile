@@ -1,0 +1,195 @@
+import os
+
+# Deteta o nome da pasta a partir do Slurm. Se não existir, usa o padrão "trinity_assembly"
+TRINITY_FOLDER = os.environ.get("TRINITY_OUT", "trinity_assembly")
+GETORGANELLE_FOLDER = os.environ.get("GETORGANELLE_OUT", "run_getorganelle")
+
+# CONFIGURAÇÕES GERAIS
+OUTDIR = config.get("outdir", "results")
+ASSEMBLERS = config.get("assemblers", "getorganelle,trinity").split(",")
+
+# Definir o caminho real absoluto da raiz da aplicação
+ROOT_DIR = os.path.dirname(os.path.abspath(workflow.snakefile)) + "/.."
+
+ORGANELLE_TYPE = config.get("organelle_type")
+
+# Captura as reads passadas pelo utilizador na linha de comandos
+R1_IN = config.get("r1", "")
+R2_IN = config.get("r2", "")
+
+# Extrai o nome limpo da amostra (ex: "data/raw/LGRA10_R1.fastq.gz" vira "LGRA10_R1")
+R1_NAME = os.path.basename(R1_IN).replace(".fastq.gz", "").replace(".fq.gz", "")
+R2_NAME = os.path.basename(R2_IN).replace(".fastq.gz", "").replace(".fq.gz", "")
+
+localrules: all
+
+rule all:
+    input:
+        f"{OUTDIR}/trimmed/trim_summary.txt",
+        f"{OUTDIR}/qc/multiqc_report.html",
+        [f"{OUTDIR}/final_outputs/{asm}_rotated.fasta" for asm in ASSEMBLERS],
+        [f"{OUTDIR}/reports/{asm}_gene_check.txt" for asm in ASSEMBLERS]
+
+# Regra 1: Fazer o subset dos ficheiros originais dinamicos
+rule subset:
+    input:
+        r1 = R1_IN,
+        r2 = R2_IN
+    output:
+        r1_sub = f"{OUTDIR}/subset/{R1_NAME}_pure_subset.fq",
+        r2_sub = f"{OUTDIR}/subset/{R2_NAME}_pure_subset.fq"
+    conda:
+        "mitocatch_seqtk"
+    shell:
+        """
+        percent=0.1
+        echo "A aplicar subset de 10% com o seqtk..."
+        seqtk sample -s100 {input.r1} $percent > {output.r1_sub} 
+        seqtk sample -s100 {input.r2} $percent > {output.r2_sub}
+        """
+
+rule trimmomatic:
+    input:
+        r1 = f"{OUTDIR}/subset/{R1_NAME}_pure_subset.fq",
+        r2 = f"{OUTDIR}/subset/{R2_NAME}_pure_subset.fq"
+    output:
+        r1_paired = f"{OUTDIR}/trimmed/{R1_NAME}_paired.fastq.gz",
+        r2_paired = f"{OUTDIR}/trimmed/{R2_NAME}_paired.fastq.gz",
+        r1_unpaired = f"{OUTDIR}/trimmed/{R1_NAME}_unpaired.fastq.gz",
+        r2_unpaired = f"{OUTDIR}/trimmed/{R2_NAME}_unpaired.fastq.gz",
+        summary = f"{OUTDIR}/trimmed/trim_summary.txt"
+    conda:
+        "mitocatch_trimmomatic"
+    shell:
+        """
+        trimmomatic PE -phred33 {input.r1} {input.r2} \
+        {output.r1_paired} {output.r1_unpaired} \
+        {output.r2_paired} {output.r2_unpaired} \
+        ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 \
+        2> {output.summary}
+        """
+
+rule fastqc_raw:
+    input:
+        r1 = R1_IN,
+        r2 = R2_IN
+    output:
+        directory(f"{OUTDIR}/qc/fastqc_raw")
+    conda:
+        "mitocatch_qc"
+    shell:
+        """
+        mkdir -p {output}
+        fastqc {input.r1} {input.r2} -o {output}
+        """
+
+rule fastqc_trimmed:
+    input:
+        r1 = f"{OUTDIR}/trimmed/{R1_NAME}_paired.fastq.gz",
+        r2 = f"{OUTDIR}/trimmed/{R2_NAME}_paired.fastq.gz"
+    output:
+        directory(f"{OUTDIR}/qc/fastqc_trimmed")
+    conda:
+        "mitocatch_qc"
+    shell:
+        """
+        mkdir -p {output}
+        fastqc {input.r1} {input.r2} -o {output}
+        """
+
+rule assembly_getorganelle:
+    input:
+        f"{OUTDIR}/trimmed/{R1_NAME}_paired.fastq.gz",
+        f"{OUTDIR}/trimmed/{R2_NAME}_paired.fastq.gz"
+    output:
+        "results/" + GETORGANELLE_FOLDER + "/extended_spades/scaffolds.fasta"
+    conda:
+        "mitocatch_getorganelle"
+    shell:
+        """
+        rm -rf results/{GETORGANELLE_FOLDER}
+        get_organelle_from_reads.py -1 {input[0]} -2 {input[1]} -o results/{GETORGANELLE_FOLDER} -F {ORGANELLE_TYPE} -R 10 -t 8 --overwrite
+        """
+
+rule trinity_assembly:
+    input:
+        r1 = f"{OUTDIR}/trimmed/{R1_NAME}_paired.fastq.gz",
+        r2 = f"{OUTDIR}/trimmed/{R2_NAME}_paired.fastq.gz"
+    output:
+        "results/" + TRINITY_FOLDER + "/Trinity.fasta"
+    conda:
+        "mitocatch_trinity"
+    run:
+        trinity_memory = os.environ.get("TRINITY_MEM", "35G")
+        shell(
+            """
+            rm -rf results/{TRINITY_FOLDER}
+            Trinity --seqType fq --left {input.r1} --right {input.r2} \
+            --CPU 6 --max_memory {trinity_memory} --output results/{TRINITY_FOLDER} \
+            --no_bowtie --min_kmer_cov 3
+            """
+        )
+
+# ============================================================================
+# REGRAS DE PÓS-PROCESSAMENTO
+# ============================================================================
+
+# --- MODO: GETORGANELLE ---
+
+rule rotate_getorganelle:
+    input:
+        "results/" + GETORGANELLE_FOLDER + "/extended_spades/scaffolds.fasta"
+    output:
+        f"{OUTDIR}/final_outputs/getorganelle_rotated.fasta"
+    conda:
+        "mitocatch_annotation"
+    shell:
+        "python {ROOT_DIR}/workflow/scripts/rotate_logic.py {input} {output}"
+
+rule check_genes_getorganelle:
+    input:
+        fasta = f"{OUTDIR}/final_outputs/getorganelle_rotated.fasta"
+    output:
+        report = f"{OUTDIR}/reports/getorganelle_gene_check.txt"
+    params:
+        ref = lambda wildcards: config.get("ref", "")
+    conda:
+        "mitocatch_annotation"
+    shell:
+        "python {ROOT_DIR}/workflow/scripts/check_genes.py {input.fasta} {output.report} \"{params.ref}\""
+
+# --- MODO: TRINITY ---
+
+rule rotate_trinity:
+    input:
+        "results/" + TRINITY_FOLDER + "/Trinity.fasta"
+    output:
+        f"{OUTDIR}/final_outputs/trinity_rotated.fasta"
+    conda:
+        "mitocatch_annotation"
+    shell:
+        "python {ROOT_DIR}/workflow/scripts/rotate_logic.py {input} {output}"
+
+rule check_genes_trinity:
+    input:
+        fasta = "results/" + TRINITY_FOLDER + "/Trinity.fasta"
+    output:
+        report = f"{OUTDIR}/reports/trinity_gene_check.txt"
+    params:
+        ref = lambda wildcards: config.get("ref", "")
+    conda:
+        "mitocatch_annotation"
+    shell:
+        "python {ROOT_DIR}/workflow/scripts/check_genes.py {input.fasta} {output.report} \"{params.ref}\""
+
+rule multiqc:
+    input:
+        f"{OUTDIR}/qc/fastqc_raw",
+        f"{OUTDIR}/qc/fastqc_trimmed",
+        f"{OUTDIR}/trimmed/trim_summary.txt"
+    output:
+        f"{OUTDIR}/qc/multiqc_report.html"
+    conda:
+        "mitocatch_qc"
+    shell:
+        "multiqc {OUTDIR}/qc/ -o {OUTDIR}/qc/ --filename multiqc_report.html"
