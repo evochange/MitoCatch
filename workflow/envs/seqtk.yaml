@@ -1,7 +1,0 @@
-name: mitocatch_seqtk
-channels:
-  - bioconda
-  - conda-forge
-  - defaults
-dependencies:
-  - seqtk=1.4

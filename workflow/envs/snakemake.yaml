@@ -1,8 +1,0 @@
-name: mitocatch_main
-channels:
-  - bioconda
-  - conda-forge
-  - defaults
-dependencies:
-  - snakemake=5.32.0
-  - python=3.6
