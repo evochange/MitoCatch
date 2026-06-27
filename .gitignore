@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# MitoCatch specific
+.snakemake/
+logs/
+results/
+benchmarks/
+workflow/envs/
