@@ -1,10 +1,10 @@
 import os
 
-# Deteta o nome da pasta a partir do Slurm. Se não existir, usa o padrão "trinity_assembly"
+
 TRINITY_FOLDER = os.environ.get("TRINITY_OUT", "trinity_assembly")
 GETORGANELLE_FOLDER = os.environ.get("GETORGANELLE_OUT", "run_getorganelle")
 
-# CONFIGURAÇÕES GERAIS
+
 OUTDIR = config.get("outdir", "results")
 ASSEMBLERS = config.get("assemblers", "getorganelle,trinity").split(",")
 
