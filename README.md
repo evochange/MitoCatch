@@ -63,7 +63,7 @@ conda deactivate
 
 ### 1. Activate the main environment:
 ```bash
-conda activate snakemake
+conda activate mitocatch_env
 ```
 
 ### 2. Execute the pipeline:
