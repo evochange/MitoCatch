@@ -78,3 +78,9 @@ bash mitocatch.sh --r1 path/to/read1.fastq.gz --r2 path/to/read2.fastq.gz --modo
 --modo: Supports getorganelle (recommended) or trinity.
 
 --organelle_type: Required only for getorganelle mode. Use the appropriate nomenclature for your sample (e.g., animal_mt, plant_mt, fungus_mt).
+
+## Video Tutorial
+To facilitate understanding of the workflow and demonstrate the practical execution of the pipeline, a video tutorial is available:
+
+* **Watch online:** [MitoCatch - How to use (Tutorial)](https://youtu.be/RVB9Mt4O4sg?si=TTJXA-aC7H9JL7JL)
+* **Local download:** The video file (`MitoCatch - How to use.mp4`) is also available directly within the repository for offline consultation.
