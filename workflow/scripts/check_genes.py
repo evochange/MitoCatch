@@ -4,14 +4,12 @@ import re
 from Bio import SeqIO
 
 def parse_coverage(header):
-    """Tenta extrair a cobertura do cabeçalho (especial para SPAdes/GetOrganelle)."""
     match = re.search(r"cov_([\d\.]+)", header)
     if match:
         return float(match.group(1))
     return None
 
 def parse_length_trinity(header):
-    """Tenta extrair o tamanho do cabeçalho do Trinity (len=X)."""
     match = re.search(r"len=(\d+)", header)
     if match:
         return int(match.group(1))
@@ -20,9 +18,7 @@ def parse_length_trinity(header):
 def check_genes_smart(input_fasta, report_file, ref_fasta=None):
     print(f"A processar o ficheiro: {input_fasta}")
     
-    # -------------------------------------------------------------------------
-    # MODO B: Se o utilizador passou uma referência válida via linha de comandos
-    # -------------------------------------------------------------------------
+
     if ref_fasta and os.path.exists(ref_fasta) and os.path.getsize(ref_fasta) > 0:
         print(f"-> [MODO B] Referência detetada ({ref_fasta}). A executar validação por BLAST...")
         
@@ -47,9 +43,7 @@ def check_genes_smart(input_fasta, report_file, ref_fasta=None):
         except Exception as e:
             print(f"Erro ao executar BLAST, a reverter para Modo Automático (Matemático)... Erro: {e}")
 
-    # -------------------------------------------------------------------------
-    # MODO C (Por omissão): Filtragem Matemática por Tamanho e Cobertura
-    # -------------------------------------------------------------------------
+
     print("-> [MODO C] Sem referência. A filtrar contigs por tamanho e cobertura...")
     
     records = list(SeqIO.parse(input_fasta, "fasta"))
@@ -59,15 +53,13 @@ def check_genes_smart(input_fasta, report_file, ref_fasta=None):
         header = record.description
         seq_len = len(record.seq)
         
-        # Se for Trinity, tenta apanhar o tamanho pelo cabeçalho, senão usa o real
+
         trinity_len = parse_length_trinity(header)
         actual_len = trinity_len if trinity_len else seq_len
         
         cov = parse_coverage(header)
         
-        # Regra de Filtragem:
-        # 1. Se tiver cobertura (GetOrganelle), guarda se cov >= 10.0 E tamanho >= 500bp
-        # 2. Se não tiver cobertura (Trinity), guarda apenas se o tamanho >= 500bp
+        
         if cov is not None:
             if cov >= 10.0 and actual_len >= 500:
                 filtered_records.append((record.id, actual_len, f"{cov:.2f}x"))
@@ -75,7 +67,7 @@ def check_genes_smart(input_fasta, report_file, ref_fasta=None):
             if actual_len >= 500:
                 filtered_records.append((record.id, actual_len, "N/A (Trinity)"))
 
-    # Escrever o relatório final limpo
+    
     with open(report_file, "w") as f:
         f.write("=====================================================================\n")
         f.write("MitoCatch - Relatório de Filtragem Automática (Filtro de Ruído)\n")
@@ -87,7 +79,7 @@ def check_genes_smart(input_fasta, report_file, ref_fasta=None):
         if filtered_records:
             f.write(f"{'ID_CONTIG':<40} {'TAMANHO (bp)':<15} {'COBERTURA':<15}\n")
             f.write("-" * 75 + "\n")
-            # Ordenar os contigs do maior para o menor para ficar arrumado
+            
             for cid, clen, ccov in sorted(filtered_records, key=lambda x: x[1], reverse=True):
                 f.write(f"{cid:<40} {clen:<15} {ccov:<15}\n")
         else:
@@ -100,6 +92,6 @@ if __name__ == "__main__":
         print("Uso: python check_genes.py <input_fasta> <output_report_txt> [opcional_ref_fasta]")
         sys.exit(1)
         
-    # Se o Snakemake passar um terceiro argumento, será a referência
+    
     optional_ref = sys.argv[3] if len(sys.argv) > 3 else None
     check_genes_smart(sys.argv[1], sys.argv[2], optional_ref)

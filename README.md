@@ -14,24 +14,6 @@ git clone [https://github.com/evochange/MitoCatch.git](https://github.com/evocha
 cd MitoCatch
 ```
 
-### 2. Installing Conda (Miniconda)
-If you do not have Conda installed, you can set it up using Miniconda:
-
-```bash
-# Download and install Miniconda (Linux 64-bit)
-wget [https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh](https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh)
-bash Miniconda3-latest-Linux-x86_64.sh -b -p $HOME/miniconda
-
-# Initialize Conda
-$HOME/miniconda/bin/conda init bash
-source ~/.bashrc
-```
-
-But if you wanna use Mamba, you can it up using:
-```bash
-conda install -n base -c conda-forge mamba
-```
-
 ### 2. Environment Setup
 You can set up the required environments using either `conda` or `mamba`.
 
@@ -56,6 +38,7 @@ conda create -n mitocatch_annotation -c bioconda -c conda-forge -c defaults blas
 
 #### Option B: Using Mamba (Recommended for speed)
 ```bash
+conda install -n base -c conda-forge mamba
 
 # Run the following commands substituting 'conda' with 'mamba'
 mamba create -n mitocatch_env -c conda-forge -c bioconda snakemake=9.23.0 biopython trimmomatic sra-tools spades magic-wormhole blast -y
@@ -80,7 +63,7 @@ conda deactivate
 
 ### 1. Activate the main environment:
 ```bash
-conda activate snakemake
+conda activate mitocatch_env
 ```
 
 ### 2. Execute the pipeline:

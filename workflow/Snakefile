@@ -1,23 +1,17 @@
 import os
 
-# Deteta o nome da pasta a partir do Slurm. Se não existir, usa o padrão "trinity_assembly"
 TRINITY_FOLDER = os.environ.get("TRINITY_OUT", "trinity_assembly")
 GETORGANELLE_FOLDER = os.environ.get("GETORGANELLE_OUT", "run_getorganelle")
 
-# CONFIGURAÇÕES GERAIS
 OUTDIR = config.get("outdir", "results")
 ASSEMBLERS = config.get("assemblers", "getorganelle,trinity").split(",")
 
-# Definir o caminho real absoluto da raiz da aplicação
 ROOT_DIR = os.path.dirname(os.path.abspath(workflow.snakefile)) + "/.."
-
 ORGANELLE_TYPE = config.get("organelle_type")
 
-# Captura as reads passadas pelo utilizador na linha de comandos
 R1_IN = config.get("r1", "")
 R2_IN = config.get("r2", "")
 
-# Extrai o nome limpo da amostra (ex: "data/raw/LGRA10_R1.fastq.gz" vira "LGRA10_R1")
 R1_NAME = os.path.basename(R1_IN).replace(".fastq.gz", "").replace(".fq.gz", "")
 R2_NAME = os.path.basename(R2_IN).replace(".fastq.gz", "").replace(".fq.gz", "")
 
@@ -30,7 +24,6 @@ rule all:
         [f"{OUTDIR}/final_outputs/{asm}_rotated.fasta" for asm in ASSEMBLERS],
         [f"{OUTDIR}/reports/{asm}_gene_check.txt" for asm in ASSEMBLERS]
 
-# Regra 1: Fazer o subset dos ficheiros originais dinamicos
 rule subset:
     input:
         r1 = R1_IN,
@@ -130,12 +123,6 @@ rule trinity_assembly:
             """
         )
 
-# ============================================================================
-# REGRAS DE PÓS-PROCESSAMENTO
-# ============================================================================
-
-# --- MODO: GETORGANELLE ---
-
 rule rotate_getorganelle:
     input:
         "results/" + GETORGANELLE_FOLDER + "/extended_spades/scaffolds.fasta"
@@ -157,8 +144,6 @@ rule check_genes_getorganelle:
         "mitocatch_annotation"
     shell:
         "python {ROOT_DIR}/workflow/scripts/check_genes.py {input.fasta} {output.report} \"{params.ref}\""
-
-# --- MODO: TRINITY ---
 
 rule rotate_trinity:
     input:
