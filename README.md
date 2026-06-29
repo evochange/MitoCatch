@@ -73,14 +73,47 @@ bash mitocatch.sh --r1 path/to/read1.fastq.gz --r2 path/to/read2.fastq.gz --modo
 
 ## Usage Notes:
 
---r1 / --r2: Replace path/to/read1.fastq.gz with the actual path and filename of your input FASTQ files.
+* --r1 / --r2: Replace path/to/read1.fastq.gz with the actual path and filename of your input FASTQ files.
+* --modo: Supports getorganelle (recommended) or trinity.
+* --organelle_type: Required only for getorganelle mode. Use the appropriate nomenclature for your sample (e.g., animal_mt, plant_mt, fungus_mt).
 
---modo: Supports getorganelle (recommended) or trinity.
+## Test Dataset
+To verify that the pipeline is correctly installed and functioning, a test dataset is available for download from the NCBI SRA database:
 
---organelle_type: Required only for getorganelle mode. Use the appropriate nomenclature for your sample (e.g., animal_mt, plant_mt, fungus_mt).
+* **Data Source**: [MyxoHares - Unravelling the genomic landscape of myxomatosis susceptibility in Iberian hares](https://www.ncbi.nlm.nih.gov/sra/ERX15431688[accn])
+* **Accession Number**: ERR16040998
+
+### How to run the test
+#### 1. Prepare the directory:
+Ensure you are inside your project's root folder and navigate to the data directory:
+```bash
+mkdir -p data/raw #If you don't have it already
+cd data/raw
+```
+
+#### 2. Download the data:
+Activate your `mitocatch_env` and download the FASTQ files using `sra-tools`:
+```bash
+conda activate mitocatch_env
+fastq-dump --split-files --gzip ERR16040998
+```
+
+#### 3. Execute the pipeline:
+Return to the project root and run the pipeline. You can choose between `getorganelle` or `trinity` modes:
+* Using GetOrganelle mode:
+```bash
+cd ../..
+bash mitocatch.sh --r1 data/raw/ERR16040998_1.fastq.gz --r2 data/raw/ERR16040998_2.fastq.gz --modo getorganelle --organelle_type animal_mt
+```
+* Using Trinity mode:
+```bash
+cd ../..
+bash mitocatch.sh --r1 data/raw/ERR16040998_1.fastq.gz --r2 data/raw/ERR16040998_2.fastq.gz --modo trinity 
+```
 
 ## Video Tutorial
 To facilitate understanding of the workflow and demonstrate the practical execution of the pipeline, a video tutorial is available:
 
 * **Watch online:** [MitoCatch - How to use (Tutorial)](https://youtu.be/RVB9Mt4O4sg?si=TTJXA-aC7H9JL7JL)
 * **Local download:** The video file (`MitoCatch - How to use.mp4`) is also available directly within the repository for offline consultation.
+
